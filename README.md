@@ -4,3 +4,5 @@
 ```bash
 python3.14 -m venv venv
 ```
+
+а как работает branch?
