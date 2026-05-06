@@ -96,6 +96,14 @@ services:
     ports:
       - "5432:5432"
 
+  metabase:
+    build:
+      context: .
+      dockerfile: ./metabase/Dockerfile
+    container_name: metabase
+    ports:
+      - "3000:3000"
+
   minio:
     image: minio/minio:RELEASE.2025-02-18T16-25-55Z
     restart: always
