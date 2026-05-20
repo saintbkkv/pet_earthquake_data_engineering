@@ -3,6 +3,8 @@ import logging
 import duckdb
 import pendulum
 from airflow import DAG
+from airflow.models import DagRun
+from airflow.utils.state import State
 from airflow.models import Variable
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
@@ -33,7 +35,7 @@ SHORT_DESCRIPTION = "SHORT DESCRIPTION"
 
 args = {
     "owner": OWNER,
-    "start_date": pendulum.datetime(2026, 5, 1, tz="Asia/Almaty"),
+    "start_date": pendulum.datetime(2026, 5, 17, tz="Asia/Almaty"),
     "catchup": True,
     "retries": 3,
     "retry_delay": pendulum.duration(hours=1),
@@ -49,6 +51,16 @@ def get_dates(**context) -> tuple[str, str]: # ** - бери сколько уг
     return start_date, end_date
 
 
+def get_last_successful_run(dt, **context):
+    last_run = DagRun.find(
+        dag_id="raw_from_api_to_s3",
+        state=State.SUCCESS,
+    )
+    if not last_run:
+        return dt
+    return max(run.execution_date for run in last_run)
+
+
 def get_and_transfer_raw_data_to_ods_pg(**context):
     """"""
     
@@ -56,6 +68,8 @@ def get_and_transfer_raw_data_to_ods_pg(**context):
     logging.info(f"Start load for dates: {start_date}/{end_date}")
     connection = duckdb.connect()
     
+    
+    # В рамках докера имя HOST = имя service в docker-compose.yaml
     connection.sql(
         f"""
         SET TIMEZONE='UTC';
@@ -72,7 +86,7 @@ def get_and_transfer_raw_data_to_ods_pg(**context):
             HOST 'postgres_dwh',
             PORT 5432,
             DATABASE postgres,
-            USER 'postgres',
+            USER 'alikhan',
             PASSWORD '{PASSWORD}'
         );
 
@@ -153,9 +167,10 @@ with DAG(
         task_id="sensor_on_raw_layer",
         external_dag_id="raw_from_api_to_s3",
         allowed_states=["success"],
-        mode="reshedule",
+        mode="reschedule",
         timeout=360000, # Длительность работы сенсора
-        poke_interval=60 # Частота проверки
+        poke_interval=60, # Частота проверки
+        execution_date_fn=get_last_successful_run,
     )
     
     get_and_transfer_raw_data_to_ods_pg = PythonOperator(

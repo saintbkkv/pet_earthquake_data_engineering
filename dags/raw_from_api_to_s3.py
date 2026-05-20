@@ -27,7 +27,7 @@ SHORT_DESCRIPTION = " Короткое описание дага в малом �
 
 args = {
     "owner": OWNER,
-    "start_date": pendulum.datetime(2026, 5, 7),
+    "start_date": pendulum.datetime(2026, 5, 17),
     "catchup": True,
     "retries": 3,
     "retry_delay": pendulum.duration(hours=1)
