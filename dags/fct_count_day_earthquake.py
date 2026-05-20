@@ -26,7 +26,7 @@ SHORT_DESCRIPTION = "SHORT DISCRIPTION"
 args = {
     "owner": OWNER,
     "start_date": pendulum.datetime(2025, 5, 17, tz="Asia/Almaty"),
-    "cathcup": True,
+    "catchcup": True,
     "retries": 3,
     "retry_delay": pendulum.duration(hours=1),
 }
@@ -98,11 +98,11 @@ with DAG(
     
     insert_into_target_table = SQLExecuteQueryOperator(
         task_id="insert_into_target_table",
-        conn_id="PG_CONNECT",
+        conn_id=PG_CONNECT,
         autocommit=True,
         sql=f"""
         INSERT INTO {SCHEMA}.{TARGET_TABLE}
-        SELECT * FROM stg."tmp_{TARGET_TABLE}_{{{{ date_interval_start.format('YYYY-MM-DD')}}}}"
+        SELECT * FROM stg."tmp_{TARGET_TABLE}_{{{{ data_interval_start.format('YYYY-MM-DD')}}}}"
         """,
     )
 
